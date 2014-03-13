@@ -7,7 +7,7 @@ use TAP::Stream::Text;
 use namespace::autoclean;
 with qw(TAP::Stream::Role::ToString);
 
-has 'stream' => (
+has '_stream' => (
     traits  => ['Array'],
     is      => 'ro',
     isa     => 'ArrayRef[TAP::Stream::Role::ToString]',
@@ -26,7 +26,7 @@ sub to_string {
 
     my $test_number = 0;
 
-    foreach my $next ( @{ $self->stream } ) {
+    foreach my $next ( @{ $self->_stream } ) {
         $test_number++;
         chomp( my $tap = $next->to_string );
         my $name = $next->name;
@@ -99,32 +99,36 @@ B<Experimental> module to combine multiple TAP streams.
 
 =head1 SYNOPSIS
 
-    # combine two chunks of TAP into a single stream
+    use TAP::Stream;
+    use TAP::Stream::Text;
 
-    my $stream = TAP::Stream->new;
-    $stream->add_to_stream(
-        TAP::Stream::Text->new(
-            name => 'foo tests',
-            text => <<'END' )
+    my $tap1 = <<'END';
     ok 1 - foo 1
     ok 2 - foo 2
     1..2
     END
-    );
-    $stream->add_to_stream(
-        TAP::Stream::Text->new(
-            name => 'bar tests',
-            text => <<'END' )
+
+    # note that we have a failing test
+    my $tap2 = <<'END';
     ok 1 - bar 1
     ok 2 - bar 2
+        1..3
         ok 1 - bar subtest 1
         ok 2 - bar subtest 2
-        not ok 2 - bar subtest 3 #TODO ignore
-    not ok 3 - bar subtest
-    ok 4 - bar 4
+        not ok 3 - bar subtest 3 #TODO ignore
+    ok 3 - bar subtest
+    not ok 4 - bar 4
     1..4
     END
+
+    my $stream = TAP::Stream->new;
+
+    $stream->add_to_stream(
+        TAP::Stream::Text->new( name => 'foo tests', text => $tap1 ),
+        TAP::Stream::Text->new( name => 'bar tests', text => $tap2 )
     );
+
+    print $stream->to_string;
 
 Output:
 
@@ -134,11 +138,79 @@ Output:
     ok 1 - foo tests
         ok 1 - bar 1
         ok 2 - bar 2
+            1..3
             ok 1 - bar subtest 1
             ok 2 - bar subtest 2
-            not ok 2 - bar subtest 3 #TODO ignore
-        not ok 3 - bar subtest
-        ok 4 - bar 4
+            not ok 3 - bar subtest 3 #TODO ignore
+        ok 3 - bar subtest
+        not ok 4 - bar 4
         1..4
-    ok 2 - bar tests
+    not ok 2 - bar tests
+    # Failed 1 out of 4 tests
     1..2
+
+=head1 DESCRIPTION
+
+Sometimes you find yourself needing to merge multiple streams of TAP.
+Several use cases:
+
+=over 4
+
+=item * Merging results from parallel tests
+
+=item * Running tests across multiple boxes and fetching their TAP
+
+=item * Saving TAP and reassembling it later
+
+=back
+
+L<TAP::Stream> allows you to do this. You can both merge multiple chunks of
+TAP text, or even multiple C<TAP::Stream> objects.
+
+=head1 METHODS
+
+=head2 C<new>
+
+    my $stream = TAP::Stream->new;
+
+Takes no arguments. Creates a TAP::Stream object.
+
+=head2 C<add_to_stream>
+
+    $stream->add_to_stream(TAP::Stream::Text->new(\%args));
+    # or
+    $stream->add_to_stream($another_stream);
+
+Add a L<TAP::Stream::Text> object or another L<TAP::Stream> object.
+
+=head2 C<to_string>
+
+    say $stream->to_string;
+
+Prints the stream as TAP. We do not overload stringification.
+
+=head1 HOW IT WORKS
+
+Each chunk of TAP (or stream) that is added is added as a subtest. This avoids
+issues of trying to recalculate the numbers. This means that if you
+concatenate three TAP streams, each with 25 tests, you will still see 3 tests
+reported (because you have three subtests).
+
+There is a mini-TAP parser within C<TAP::Stream>. As you add a chunk of TAP or
+a stream, the parser analyzes the TAP and if there is a failure, the subtest
+itself will be reported as a failure. Causes of failure:
+
+=over 4
+
+=item * Any failing tests (TODO tests, of course, are not failures)
+
+=item * No plan
+
+=item * Number of tests do not match the plan
+
+=item * More than one plan
+
+=back
+
+Currently we do not check for tests out of sequence because, in theory, test
+numbers are strictly optional in TAP.
