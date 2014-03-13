@@ -105,11 +105,46 @@ TAP output. This is used to create the subtest summary line:
 
 ## `add_to_stream`
 
-    $stream->add_to_stream(TAP::Stream::Text->new(\%args));
+    $stream->add_to_stream(TAP::Stream::Text->new(%args));
     # or
     $stream->add_to_stream($another_stream);
 
-Add a [TAP::Stream::Text](https://metacpan.org/pod/TAP::Stream::Text) object or another [TAP::Stream](https://metacpan.org/pod/TAP::Stream) object.
+Add a [TAP::Stream::Text](https://metacpan.org/pod/TAP::Stream::Text) object or another [TAP::Stream](https://metacpan.org/pod/TAP::Stream) object. You may
+call this method multiple times. The following two chunks of code are the
+same:
+
+    $stream->add_to_stream(
+        TAP::Stream::Text->new( name => 'foo tests', text => $tap1 ),
+        TAP::Stream::Text->new( name => 'bar tests', text => $tap2 )
+    );
+
+Versus:
+
+    $stream->add_to_stream(
+        TAP::Stream::Text->new( name => 'foo tests', text => $tap1 ),
+    );
+    $stream->add_to_stream(
+        TAP::Stream::Text->new( name => 'bar tests', text => $tap2 )
+    );
+
+Stream objects can be added to other stream objects:
+
+    my $parent = TAP::Stream->new; # the name is unused for the parent
+
+    my $stream = TAP::Stream->new( name => 'child stream' );
+
+    $stream->add_to_stream(
+        TAP::Stream::Text->new( name => 'foo tests', text => $tap1 ),
+        TAP::Stream::Text->new( name => 'bar tests', text => $tap2 )
+    );
+    $parent->add_to_stream($stream);
+
+    # later:
+    $parent->add_to_stream($another_stream);
+    $parent->add_to_stream(TAP::Stream::Text->new%args);
+    $parent->add_to_stream($yet_another_stream);
+
+    say $parent->to_string;
 
 ## `to_string`
 
