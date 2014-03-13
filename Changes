@@ -1,0 +1,4 @@
+Revision history for TAP::Stream
+
+0.01
+    - Combine multiple TAP streams via subtests
