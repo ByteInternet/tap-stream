@@ -10,7 +10,7 @@ has 'text' => (
     required => 1,
 );
 
-sub tap_to_string { shift->text }
+sub to_string { shift->text }
 
 __PACKAGE__->meta->make_immutable;
 

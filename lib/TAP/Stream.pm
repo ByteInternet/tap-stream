@@ -18,7 +18,7 @@ has 'stream' => (
     },
 );
 
-sub tap_to_string {
+sub to_string {
     my $self = shift;
     return '' if $self->is_empty;
 
@@ -28,7 +28,7 @@ sub tap_to_string {
 
     foreach my $next ( @{ $self->stream } ) {
         $test_number++;
-        chomp( my $tap = $next->tap_to_string );
+        chomp( my $tap = $next->to_string );
         my $name = $next->name;
         $to_string .= $self->_build_tap( $tap, $name, $test_number );
     }

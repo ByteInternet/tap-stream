@@ -3,7 +3,7 @@ package TAP::Stream::Role::ToString;
 use Moose::Role;
 
 requires qw(
-    tap_to_string
+    to_string
 );
 has 'name' => (
     is      => 'ro',
