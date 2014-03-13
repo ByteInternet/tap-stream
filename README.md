@@ -4,7 +4,7 @@ TAP::Stream - Combine multiple TAP streams with subtests
 
 # VERSION
 
-version 0.01
+version 0.44
 
 # SYNOPSIS
 
