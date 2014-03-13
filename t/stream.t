@@ -43,7 +43,7 @@ my $master_stream = TAP::Stream->new( name => 'master stream' );
 $master_stream->add_to_stream($parent_stream);
 
 pass 'checking';
-diag $master_stream->to_string;
+explain $master_stream->to_string;
 
 done_testing;
 
