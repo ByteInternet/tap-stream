@@ -1,4 +1,4 @@
 Revision history for TAP::Stream
 
-0.01
+0.01   March 13, 2014
     - Combine multiple TAP streams via subtests
