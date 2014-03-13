@@ -171,9 +171,30 @@ TAP text, or even multiple C<TAP::Stream> objects.
 
 =head2 C<new>
 
-    my $stream = TAP::Stream->new;
+    my $stream = TAP::Stream->new( name => 'Parent stream' );
 
-Takes no arguments. Creates a TAP::Stream object.
+Creates a TAP::Stream object. The name is optional, but highly recommend to be
+unique. The top-level stream's name is not used, but if you use
+C<add_to_stream> to add another stream object, that stream object should be
+named or else the summary C<(not) ok> line will be named C<Unnamed TAP stream>
+and this may make it harder to figure out which stream contained a failure.
+
+Names should be descriptive of the use case of the stream.
+
+=head2 C<name>
+
+    my $name = $stream->name;
+
+A read/write string accessor.
+
+Returns the name of the stream. Default to C<Unnamed TAP stream>. If you add
+this stream to another stream, consider naming this stream for a more useful
+TAP output. This is used to create the subtest summary line:
+
+        1..2
+        ok 1 - some test
+        ok 2 - another test
+    ok 1 - this is $stream->name
 
 =head2 C<add_to_stream>
 
@@ -212,5 +233,19 @@ itself will be reported as a failure. Causes of failure:
 
 =back
 
+=head1 CAVEATS
+
+=over 4
+
+=item * Out-of-sequence tests not handled
+
 Currently we do not check for tests out of sequence because, in theory, test
-numbers are strictly optional in TAP.
+numbers are strictly optional in TAP. Make sure your TAP emitters Do The Right
+Thing. Patches welcome.
+
+=item * Partial streams not handled
+
+Each chunk of TAP added must be a complete chunk of TAP, complete with a plan.
+You can't add tests 1 through 3, and then 4 through 7.
+
+=back
